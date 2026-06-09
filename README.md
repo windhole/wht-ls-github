@@ -28,3 +28,8 @@ macOS上のローカルディレクトリにあるGitHubリポジトリ群の状
 2. **実行**
    ```bash
    bun run wht-ls-github.ts
+
+## 出力例
+※プライベートリポジトリ名はマスクしています
+
+![wht-ls-githubの出力例](./wht-ls-github_sample.png)
