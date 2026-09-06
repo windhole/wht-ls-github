@@ -57,9 +57,19 @@ make show-version
 make version          # 同じ
 ```
 
-## リリース
+## GitHub 上からのリリース（PC なし）
 
-GitHub Releases へ載せるときは `make release` だけ実行します。最新の `vX.Y.Z` タグのパッチを 1 つ上げてから、darwin/arm64 のバイナリをビルドして載せます。タグがまだ無ければ `v0.1.0` です。
+手元に Go が無くても、ブラウザだけでビルドと Release 登録ができます。
+
+1. GitHub の Web UI でファイルを編集し、`main` にコミットする
+2. リポジトリの **Actions** → **Release** → **Run workflow** を開く
+3. 上げる桁（`patch` / `minor` / `major`）を選んで実行する
+
+ランナー上でテストし、darwin/arm64 の `wht-ls-github` を作り、次の `vX.Y.Z` タグと GitHub Release を付けます。タグがまだ無ければ `v0.1.0` です。main への push だけではリリースしません。
+
+## 手元からのリリース
+
+PC で GitHub Releases へ載せるときは `make release` だけ実行します。最新の `vX.Y.Z` タグのパッチを 1 つ上げてから、darwin/arm64 のバイナリをビルドして載せます。タグがまだ無ければ `v0.1.0` です。
 
 ```bash
 make release          # パッチ +1（例: v0.1.0 → v0.1.1）

@@ -8,7 +8,7 @@ PKG := ./src
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -X main.version=$(VERSION)
 
-.PHONY: all build test clean help version show-version release release-minor release-major computed-version do-release
+.PHONY: all build test clean help version show-version release release-minor release-major computed-version do-release ci-release
 
 all: build
 
@@ -22,6 +22,7 @@ help:
 	@echo '  make release          パッチを上げてタグ・ビルド・GitHub Releases する'
 	@echo '  make release-minor    マイナーを上げてリリースする'
 	@echo '  make release-major    メジャーを上げてリリースする'
+	@echo '  make ci-release       Actions 用。KIND=patch|minor|major で do-release する'
 	@echo
 	@echo 'make build の版数は git describe（無ければ dev）。明示するとき: make build VERSION=v0.1.0'
 	@echo 'リリース成果物は $(RELEASE_GOOS)/$(RELEASE_GOARCH) 固定。'
@@ -82,6 +83,9 @@ release-minor:
 release-major:
 	@$(MAKE) do-release KIND=major
 
+ci-release:
+	@$(MAKE) do-release KIND="$(KIND)"
+
 do-release:
 	@set -e; \
 	test -z "$$(git status --porcelain)" || { echo '作業ツリーが dirty です。コミットしてから make release してください。' >&2; exit 1; }; \
@@ -90,7 +94,7 @@ do-release:
 	if git rev-parse "refs/tags/$$VERSION" >/dev/null 2>&1; then echo "タグ $$VERSION はすでにあります。" >&2; exit 1; fi; \
 	$(MAKE) test; \
 	$(MAKE) build VERSION=$$VERSION GOOS=$(RELEASE_GOOS) GOARCH=$(RELEASE_GOARCH); \
-	git push origin HEAD; \
+	if [ -z "$$CI" ]; then git push origin HEAD; fi; \
 	git tag "$$VERSION"; \
 	git push origin "refs/tags/$$VERSION"; \
 	gh release create "$$VERSION" --title "$$VERSION" --generate-notes "$(BINARY)"
