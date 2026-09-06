@@ -1,6 +1,6 @@
 # 開発者向けメモ
 
-このリポジトリをビルドしたり、生成物の元データを変えたりする人向けです。コマンドの使い方は [README.md](README.md) を見てください。
+このリポジトリをビルドしたり、リリースしたりする人向けです。コマンドの使い方は [README.md](README.md) を見てください。
 
 Go の標準ライブラリだけで実装しています。第三者パッケージは使いません。実行時に呼ぶ外部コマンドは `git` と `gh` だけです。
 
@@ -20,7 +20,7 @@ Go の標準ライブラリだけで実装しています。第三者パッケ�
 
 ## ビルド
 
-`make`（または `make build`）は、いま動かしているマシン向けに `dist/wht-ls-github` を出します。版数は `-ldflags` で `main.version` に埋め込みます。未指定時は `git describe`（無ければ `dev`）です。
+`make`（または `make build`）は、いま動かしているマシン向けに `dist/wht-ls-github` を出します。できたバイナリを置く先のマシンでは Go は不要です。版数は `-ldflags` で `main.version` に埋め込みます。未指定時は `git describe`（無ければ `dev`）です。
 
 ```bash
 make
@@ -42,6 +42,12 @@ go run ./src
 go run ./src --dir /path/to/repos
 ```
 
+テスト:
+
+```bash
+make test
+```
+
 ## 版数
 
 版数の正は `vMAJOR.MINOR.PATCH` の git タグです。ファイルには持ちません。現在のタグと、次の patch / minor / major は次で見ます。
@@ -57,6 +63,11 @@ GitHub Releases へ載せるときは `make release` だけ実行します。最
 
 ```bash
 make release          # パッチ +1（例: v0.1.0 → v0.1.1）
+```
+
+桁を上げたいとき:
+
+```bash
 make release-minor    # マイナー +1（例: v0.1.1 → v0.2.0）
 make release-major    # メジャー +1（例: v0.2.0 → v1.0.0）
 ```
