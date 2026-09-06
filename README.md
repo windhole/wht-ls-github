@@ -1,35 +1,55 @@
 # wht-ls-github
 
-macOS上のローカルディレクトリにあるGitHubリポジトリ群の状態を、一括で確認・表示するためのBun製CLIツールです。
+macOS 上のローカルディレクトリにある GitHub リポジトリ群の状態を、一括で確認・表示するコマンドです。
 
-## 🌟 主な機能
+## 主な機能
 
-- **リポジトリ一覧の自動取得**: `~/Documents/GitHub` 配下を自動スキャン。
-- **最終更新順ソート**: 直近で作業したリポジトリが一番上に表示されます。
-- **公開/非公開の判定**: `gh` コマンドを使用して、GitHub上のPublic/Private設定を表示。
-- **リモート同期状態の検知**: 
-    - `Pull needed`: リモートにある更新をローカルに反映していない状態。
-    - `Push needed`: ローカルにあるコミットをリモートに送っていない状態。
-- **ローカルのクリーン判定**: 未コミットの変更（Modified）があるかを表示。
-- **DevContainer検知**: `.devcontainer` 設定の有無を確認。
+- **リポジトリ一覧の自動取得**: 既定では `~/Documents/GitHub` 直下をスキャンする
+- **最終更新順ソート**: ディレクトリの mtime が新しい順
+- **公開/非公開の判定**: `gh` で GitHub 上の Public / Private を表示
+- **リモート同期状態の検知**:
+  - `Pull needed`: リモートにある更新をローカルに反映していない
+  - `Push needed`: ローカルにあるコミットをリモートに送っていない
+- **ローカルのクリーン判定**: 未コミットの変更（Modified / Untracked）があるか
+- **Dev Container 検知**: `.devcontainer` の有無
 
-## 🚀 動作環境
+## 前提
 
-- **macOS** (Apple Silicon / Intel)
-- **Bun** (v1.0.0以上)
-- **GitHub CLI (`gh`)**: ログイン済みであること
-- **Git**
+PATH にあれば足りるもの:
 
-## 📦 インストールと実行
+- [GitHub CLI (`gh`)](https://cli.github.com/)（対象ホストにログイン済み）
+- `git`
 
-1. **スクリプトの配置**
-   `wht-ls-github.ts` として保存します。
+配布バイナリの対象は macOS（Apple Silicon）です。実行側に Go や bun は不要です。
 
-2. **実行**
-   ```bash
-   bun run wht-ls-github.ts
+## 入れ方
+
+[Releases](https://github.com/windhole/wht-ls-github/releases) から `wht-ls-github` を落とし、実行権限を付けて PATH へ置きます。
+
+```bash
+chmod +x wht-ls-github
+install -m 0755 wht-ls-github "$HOME/bin/wht-ls-github"
+```
+
+ソースからビルドする場合は [DEVELOPING.md](DEVELOPING.md) を見てください。
+
+## 使い方
+
+```bash
+# 既定の ~/Documents/GitHub を走査する
+wht-ls-github
+
+# 走査先を指定する
+wht-ls-github --dir /path/to/repos
+
+# 版数
+wht-ls-github --version
+```
+
+各リポジトリで `git fetch` します。リモートの更新を見るための副作用です。`gh repo view` が失敗したディレクトリは行から除外します。
 
 ## 出力例
+
 ※プライベートリポジトリ名はマスクしています
 
 ![wht-ls-githubの出力例](./wht-ls-github_sample.png)
