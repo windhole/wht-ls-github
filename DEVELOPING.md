@@ -20,10 +20,11 @@ Go の標準ライブラリだけで実装しています。第三者パッケ�
 
 ## ビルド
 
-成果物は `dist/wht-ls-github`（darwin/arm64）です。できたバイナリを Mac に置くときは Go は不要です。版数は `-ldflags` で `main.version` に埋め込みます。未指定時は `git describe`（無ければ `dev`）です。
+`make`（または `make build`）は、いま動かしているマシン向けに `dist/wht-ls-github` を出します。版数は `-ldflags` で `main.version` に埋め込みます。未指定時は `git describe`（無ければ `dev`）です。
 
 ```bash
 make
+make help
 make build VERSION=v0.1.0   # 版を明示する場合
 ./dist/wht-ls-github --version
 ```
@@ -41,25 +42,23 @@ go run ./src
 go run ./src --dir /path/to/repos
 ```
 
-## リリース
+## 版数
 
-GitHub Releases へ載せるときは `make release` だけ実行します。最新の `vX.Y.Z` タグのパッチを 1 つ上げます。タグがまだ無ければ `v0.1.0` です。
-
-```bash
-make release
-```
-
-桁を上げたいとき:
-
-```bash
-make release-minor
-make release-major
-```
-
-現在の版と、次の patch / minor / major を見る場合:
+版数の正は `vMAJOR.MINOR.PATCH` の git タグです。ファイルには持ちません。現在のタグと、次の patch / minor / major は次で見ます。
 
 ```bash
 make show-version
+make version          # 同じ
 ```
 
-作業ツリーがきれいな状態で、タグ作成・darwin/arm64 のビルド・`gh release create` まで行います。アップロードするファイルは `dist/wht-ls-github` で、Release 上の Asset 名は `wht-ls-github` です。
+## リリース
+
+GitHub Releases へ載せるときは `make release` だけ実行します。最新の `vX.Y.Z` タグのパッチを 1 つ上げてから、darwin/arm64 のバイナリをビルドして載せます。タグがまだ無ければ `v0.1.0` です。
+
+```bash
+make release          # パッチ +1（例: v0.1.0 → v0.1.1）
+make release-minor    # マイナー +1（例: v0.1.1 → v0.2.0）
+make release-major    # メジャー +1（例: v0.2.0 → v1.0.0）
+```
+
+作業ツリーがきれいな状態で、テスト・darwin/arm64 のビルド・タグ作成・`gh release create` まで行います。アップロードするファイルは `dist/wht-ls-github` で、Release 上の Asset 名は `wht-ls-github` です。

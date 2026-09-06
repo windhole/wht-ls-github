@@ -31,7 +31,15 @@ chmod +x wht-ls-github
 install -m 0755 wht-ls-github "$HOME/bin/wht-ls-github"
 ```
 
-ソースからビルドする場合は [DEVELOPING.md](DEVELOPING.md) を見てください。
+ソースからビルドする場合:
+
+```bash
+make
+./dist/wht-ls-github --version
+```
+
+版数の確認と、パッチ / マイナー / メジャーを上げて GitHub Releases に載せる手順は [DEVELOPING.md](DEVELOPING.md) を見てください。
+
 
 ## 使い方
 

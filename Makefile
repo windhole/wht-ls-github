@@ -1,14 +1,30 @@
 BINARY := dist/wht-ls-github
-GOOS := darwin
-GOARCH := arm64
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+RELEASE_GOOS := darwin
+RELEASE_GOARCH := arm64
 PKG := ./src
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -X main.version=$(VERSION)
 
-.PHONY: all build test clean show-version release release-minor release-major computed-version do-release
+.PHONY: all build test clean help version show-version release release-minor release-major computed-version do-release
 
 all: build
+
+help:
+	@echo '使い方'
+	@echo '  make / make build     このマシン向けに $(BINARY) をビルドする'
+	@echo '  make test             テストを実行する'
+	@echo '  make clean            dist/ を消す'
+	@echo '  make show-version     現在のタグと次の patch / minor / major を表示する'
+	@echo '  make version          show-version と同じ'
+	@echo '  make release          パッチを上げてタグ・ビルド・GitHub Releases する'
+	@echo '  make release-minor    マイナーを上げてリリースする'
+	@echo '  make release-major    メジャーを上げてリリースする'
+	@echo
+	@echo 'make build の版数は git describe（無ければ dev）。明示するとき: make build VERSION=v0.1.0'
+	@echo 'リリース成果物は $(RELEASE_GOOS)/$(RELEASE_GOARCH) 固定。'
 
 build:
 	mkdir -p dist
@@ -19,6 +35,8 @@ test:
 
 clean:
 	rm -rf dist
+
+version: show-version
 
 show-version:
 	@git fetch origin --tags >/dev/null 2>&1 || true
@@ -71,7 +89,7 @@ do-release:
 	echo "リリース: $$VERSION"; \
 	if git rev-parse "refs/tags/$$VERSION" >/dev/null 2>&1; then echo "タグ $$VERSION はすでにあります。" >&2; exit 1; fi; \
 	$(MAKE) test; \
-	$(MAKE) build VERSION=$$VERSION; \
+	$(MAKE) build VERSION=$$VERSION GOOS=$(RELEASE_GOOS) GOARCH=$(RELEASE_GOARCH); \
 	git push origin HEAD; \
 	git tag "$$VERSION"; \
 	git push origin "refs/tags/$$VERSION"; \
