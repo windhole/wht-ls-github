@@ -14,8 +14,10 @@ type cliArgs struct {
 	dir     string
 }
 
+const commandName = "lsg"
+
 func parseArgs(argv []string) (cliArgs, error) {
-	fs := flag.NewFlagSet("wht-ls-github", flag.ContinueOnError)
+	fs := flag.NewFlagSet(commandName, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 
 	help := fs.Bool("help", false, "")
@@ -42,11 +44,11 @@ func parseArgs(argv []string) (cliArgs, error) {
 }
 
 func printVersion(w io.Writer) {
-	fmt.Fprintf(w, "wht-ls-github %s\n", versionString())
+	fmt.Fprintf(w, "%s %s\n", commandName, versionString())
 }
 
 func printUsage(w io.Writer, cmd string) {
-	fmt.Fprintf(w, "wht-ls-github — ローカルの GitHub リポジトリ一覧を表示する\n")
+	fmt.Fprintf(w, "%s — ローカルの GitHub リポジトリ一覧を表示する\n", commandName)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "使い方")
 	fmt.Fprintf(w, "  %s\n", cmd)

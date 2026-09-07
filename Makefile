@@ -1,4 +1,4 @@
-BINARY := dist/wht-ls-github
+BINARY := dist/lsg
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 RELEASE_GOOS := darwin

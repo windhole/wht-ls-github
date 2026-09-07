@@ -1,4 +1,4 @@
-# wht-ls-github
+# lsg
 
 ローカルディレクトリにある GitHub リポジトリ群の状態を、一括で確認・表示するコマンドです。
 
@@ -24,11 +24,11 @@ PATH にあれば足りるもの:
 
 ## 入れ方
 
-[Releases](https://github.com/windhole/wht-ls-github/releases) から `wht-ls-github` を落とし、実行権限を付けて PATH へ置きます。
+[Releases](https://github.com/windhole/wht-ls-github/releases) から `lsg` を落とし、実行権限を付けて PATH へ置きます。
 
 ```bash
-chmod +x wht-ls-github
-install -m 0755 wht-ls-github "$HOME/bin/wht-ls-github"
+chmod +x lsg
+install -m 0755 lsg "$HOME/bin/lsg"
 ```
 
 ソースからビルドする場合は [development.md](development.md) を見てください。
@@ -37,13 +37,13 @@ install -m 0755 wht-ls-github "$HOME/bin/wht-ls-github"
 
 ```bash
 # 既定の ~/Documents/GitHub を走査する
-wht-ls-github
+lsg
 
 # 走査先を指定する
-wht-ls-github --dir /path/to/repos
+lsg --dir /path/to/repos
 
 # バージョンだけ
-wht-ls-github --version
+lsg --version
 ```
 
 各リポジトリで `git fetch` します。リモートの更新を見るための副作用です。`gh repo view` が失敗したディレクトリは行から除外します。
@@ -68,4 +68,4 @@ wht-ls-github --version
 
 ※プライベートリポジトリ名はマスクしています
 
-![wht-ls-githubの出力例](./wht-ls-github_sample.png)
+![lsg の出力例](./wht-ls-github_sample.png)

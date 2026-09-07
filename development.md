@@ -20,19 +20,19 @@ Go の標準ライブラリだけで実装しています。第三者パッケ�
 
 ## ビルド
 
-`make`（または `make build`）は、いま動かしているマシン向けに `dist/wht-ls-github` を出します。できたバイナリを置く先のマシンでは Go は不要です。版数は `-ldflags` で `main.version` に埋め込みます。未指定時は `git describe`（無ければ `dev`）です。
+`make`（または `make build`）は、いま動かしているマシン向けに `dist/lsg` を出します。できたバイナリを置く先のマシンでは Go は不要です。版数は `-ldflags` で `main.version` に埋め込みます。未指定時は `git describe`（無ければ `dev`）です。
 
 ```bash
 make
 make help
 make build VERSION=v0.1.0   # 版を明示する場合
-./dist/wht-ls-github --version
+./dist/lsg --version
 ```
 
 PATH の通った場所へ置いて使います。
 
 ```bash
-install -m 0755 dist/wht-ls-github "$HOME/bin/wht-ls-github"
+install -m 0755 dist/lsg "$HOME/bin/lsg"
 ```
 
 ソースから直接走らせる場合:
@@ -65,7 +65,7 @@ make version          # 同じ
 2. リポジトリの **Actions** → **Release** → **Run workflow** を開く
 3. 上げる桁（`patch` / `minor` / `major`）を選んで実行する
 
-ランナー上でテストし、darwin/arm64 の `wht-ls-github` を作り、次の `vX.Y.Z` タグと GitHub Release を付けます。タグがまだ無ければ `v0.1.0` です。main への push だけではリリースしません。
+ランナー上でテストし、darwin/arm64 の `lsg` を作り、次の `vX.Y.Z` タグと GitHub Release を付けます。タグがまだ無ければ `v0.1.0` です。main への push だけではリリースしません。
 
 ## 手元からのリリース
 
@@ -82,4 +82,4 @@ make release-minor    # マイナー +1（例: v0.1.1 → v0.2.0）
 make release-major    # メジャー +1（例: v0.2.0 → v1.0.0）
 ```
 
-作業ツリーがきれいな状態で、テスト・darwin/arm64 のビルド・タグ作成・`gh release create` まで行います。アップロードするファイルは `dist/wht-ls-github` で、Release 上の Asset 名は `wht-ls-github` です。
+作業ツリーがきれいな状態で、テスト・darwin/arm64 のビルド・タグ作成・`gh release create` まで行います。アップロードするファイルは `dist/lsg` で、Release 上の Asset 名は `lsg` です。

@@ -217,10 +217,10 @@ func TestRunMissingTools(t *testing.T) {
 		lookPath: func(string) (string, error) { return "", os.ErrNotExist },
 		stdout:   &stdout,
 		stderr:   &stderr,
-		args0:    "wht-ls-github",
+		args0:    "lsg",
 	}
 	oldArgs := os.Args
-	os.Args = []string{"wht-ls-github"}
+	os.Args = []string{"lsg"}
 	t.Cleanup(func() { os.Args = oldArgs })
 
 	code := run(h)

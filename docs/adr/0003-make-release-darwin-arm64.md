@@ -1,7 +1,7 @@
 # 0003. make で darwin/arm64 のバイナリをビルドし GitHub Releases に載せる
 
 Date: 2026-09-06
-Status: Accepted (amended by ADR-0007 and ADR-0009)
+Status: Accepted (amended by ADR-0007, ADR-0009, and ADR-0010)
 
 ## Context
 

@@ -74,7 +74,7 @@ func TestPrintVersion(t *testing.T) {
 	version = "v0.1.0"
 	t.Cleanup(func() { version = old })
 	printVersion(&b)
-	if b.String() != "wht-ls-github v0.1.0\n" {
+	if b.String() != "lsg v0.1.0\n" {
 		t.Fatalf("got %q", b.String())
 	}
 }

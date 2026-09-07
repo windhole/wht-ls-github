@@ -12,12 +12,12 @@ func TestRunHelpAndVersion(t *testing.T) {
 	h := &host{
 		stdout: &stdout,
 		stderr: &stderr,
-		args0:  "wht-ls-github",
+		args0:  "lsg",
 	}
 	oldArgs := os.Args
 	t.Cleanup(func() { os.Args = oldArgs })
 
-	os.Args = []string{"wht-ls-github", "--help"}
+	os.Args = []string{"lsg", "--help"}
 	if code := run(h); code != 0 {
 		t.Fatalf("help code=%d stderr=%s", code, stderr.String())
 	}
@@ -30,17 +30,17 @@ func TestRunHelpAndVersion(t *testing.T) {
 	old := version
 	version = "v9.9.9"
 	t.Cleanup(func() { version = old })
-	os.Args = []string{"wht-ls-github", "--version"}
+	os.Args = []string{"lsg", "--version"}
 	if code := run(h); code != 0 {
 		t.Fatalf("version code=%d", code)
 	}
-	if stdout.String() != "wht-ls-github v9.9.9\n" {
+	if stdout.String() != "lsg v9.9.9\n" {
 		t.Fatalf("version: %q", stdout.String())
 	}
 
 	stdout.Reset()
 	stderr.Reset()
-	os.Args = []string{"wht-ls-github", "--nope"}
+	os.Args = []string{"lsg", "--nope"}
 	if code := run(h); code != 2 {
 		t.Fatalf("unknown code=%d", code)
 	}
@@ -88,10 +88,10 @@ func TestRunListsRepos(t *testing.T) {
 		},
 		stdout: &stdout,
 		stderr: &stderr,
-		args0:  "wht-ls-github",
+		args0:  "lsg",
 	}
 	oldArgs := os.Args
-	os.Args = []string{"wht-ls-github"}
+	os.Args = []string{"lsg"}
 	t.Cleanup(func() { os.Args = oldArgs })
 
 	if code := run(h); code != 0 {
@@ -115,10 +115,10 @@ func TestRunMissingScanDir(t *testing.T) {
 		stat:     func(path string) (os.FileInfo, error) { return nil, os.ErrNotExist },
 		stdout:   &stdout,
 		stderr:   &stderr,
-		args0:    "wht-ls-github",
+		args0:    "lsg",
 	}
 	oldArgs := os.Args
-	os.Args = []string{"wht-ls-github", "--dir", "/missing"}
+	os.Args = []string{"lsg", "--dir", "/missing"}
 	t.Cleanup(func() { os.Args = oldArgs })
 
 	if code := run(h); code != 1 {
