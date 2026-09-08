@@ -1,7 +1,7 @@
 # 0002. Go 標準ライブラリのみで CLI を実装する
 
 Date: 2026-09-06
-Status: Accepted
+Status: Accepted (table rendering amended by ADR-0011)
 
 ## Context
 
@@ -9,7 +9,7 @@ bun の TypeScript 単一ファイルでも第三者パッケージは使って�
 
 ## Decision
 
-- 実装言語は Go。依存モジュールは置かず、標準ライブラリだけを使う（`os/exec`、`encoding/json`、`flag`、`os`、`path/filepath`、`sync`、`text/tabwriter`）。
+- 実装言語は Go。依存モジュールは置かず、標準ライブラリだけを使う（`os/exec`、`encoding/json`、`flag`、`os`、`path/filepath`、`sync`）。表の罫線は ADR-0011。
 - 配布物は `go build` した単一バイナリ。実行時に必要な外部コマンドは従来どおり PATH 上の `git` と `gh` のみ。
 - bun / TypeScript のソースは削除する。
 - Cobra などの CLI 枠、golang.org/x 配下の拡張パッケージ、go-git も使わない。
