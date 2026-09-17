@@ -2,21 +2,21 @@ package main
 
 import "testing"
 
-func TestParseGhPrivate(t *testing.T) {
+func TestParseGhMeta(t *testing.T) {
 	t.Parallel()
 
-	priv, ok := parseGhPrivate(`{"isPrivate":true}`)
-	if !ok || !priv {
-		t.Fatalf("private: got %v %v", priv, ok)
+	priv, ok := parseGhMeta(`{"isPrivate":true}`)
+	if !ok || !priv.IsPrivate || priv.IsArchived {
+		t.Fatalf("private: %+v %v", priv, ok)
 	}
-	pub, ok := parseGhPrivate(`{"isPrivate":false}`)
-	if !ok || pub {
-		t.Fatalf("public: got %v %v", pub, ok)
+	pub, ok := parseGhMeta(`{"isPrivate":false,"isArchived":true}`)
+	if !ok || pub.IsPrivate || !pub.IsArchived {
+		t.Fatalf("archived public: %+v %v", pub, ok)
 	}
-	if _, ok := parseGhPrivate(""); ok {
+	if _, ok := parseGhMeta(""); ok {
 		t.Fatal("empty should fail")
 	}
-	if _, ok := parseGhPrivate("not-json"); ok {
+	if _, ok := parseGhMeta("not-json"); ok {
 		t.Fatal("invalid json should fail")
 	}
 }
@@ -65,11 +65,17 @@ func TestSyncLabel(t *testing.T) {
 func TestVisibilityCleanDevLabels(t *testing.T) {
 	t.Parallel()
 
-	if visibilityLabel(true) != "🔒 Priv" {
-		t.Fatal(visibilityLabel(true))
+	if visibilityLabel(true, false) != "🔒 Priv" {
+		t.Fatal(visibilityLabel(true, false))
 	}
-	if visibilityLabel(false) != "🌐 Pub" {
-		t.Fatal(visibilityLabel(false))
+	if visibilityLabel(false, false) != "🌐 Pub" {
+		t.Fatal(visibilityLabel(false, false))
+	}
+	if visibilityLabel(true, true) != "🗄️ Priv" {
+		t.Fatal(visibilityLabel(true, true))
+	}
+	if visibilityLabel(false, true) != "🗄️ Pub" {
+		t.Fatal(visibilityLabel(false, true))
 	}
 	if cleanLabel("") != "✅" {
 		t.Fatal(cleanLabel(""))
@@ -84,3 +90,44 @@ func TestVisibilityCleanDevLabels(t *testing.T) {
 		t.Fatal(devLabel(false))
 	}
 }
+
+func TestMatchDirName(t *testing.T) {
+	t.Parallel()
+
+	if !matchDirName("anything", false, false) {
+		t.Fatal("no filter should match all")
+	}
+	if !matchDirName("proj-foo", true, false) || matchDirName("wht-ls", true, false) {
+		t.Fatal("--proj")
+	}
+	if !matchDirName("wht-ls", false, true) || !matchDirName("whc-ai", false, true) {
+		t.Fatal("--wh should match wh*")
+	}
+	if matchDirName("proj-foo", false, true) {
+		t.Fatal("proj- should not match --wh")
+	}
+	if !matchDirName("proj-foo", true, true) || !matchDirName("wht-ls", true, true) {
+		t.Fatal("both filters are a union")
+	}
+	if matchDirName("other", true, true) {
+		t.Fatal("union should still exclude others")
+	}
+}
+
+func TestIsGitWorkTreeOutput(t *testing.T) {
+	t.Parallel()
+
+	if !isGitWorkTreeOutput("true", nil) {
+		t.Fatal("true")
+	}
+	if !isGitWorkTreeOutput("", nil) {
+		t.Fatal("empty success is treated as git (tests)")
+	}
+	if isGitWorkTreeOutput("true", errSentinel{}) {
+		t.Fatal("error")
+	}
+}
+
+type errSentinel struct{}
+
+func (errSentinel) Error() string { return "no" }

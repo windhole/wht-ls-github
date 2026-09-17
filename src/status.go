@@ -12,20 +12,34 @@ type repoRow struct {
 	Sync       string
 	Clean      string
 	Dev        string
+	archived   bool
 }
 
-func parseGhPrivate(raw string) (bool, bool) {
+type ghMeta struct {
+	IsPrivate  bool `json:"isPrivate"`
+	IsArchived bool `json:"isArchived"`
+}
+
+const (
+	labelNoGit    = "🚫 no git"
+	labelNoGitHub = "☁️ no GitHub"
+	labelNA       = "-"
+	labelArchPriv = "🗄️ Priv"
+	labelArchPub  = "🗄️ Pub"
+	prefixProj    = "proj-"
+	prefixWH      = "wh"
+)
+
+func parseGhMeta(raw string) (ghMeta, bool) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
-		return false, false
+		return ghMeta{}, false
 	}
-	var payload struct {
-		IsPrivate bool `json:"isPrivate"`
-	}
+	var payload ghMeta
 	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
-		return false, false
+		return ghMeta{}, false
 	}
-	return payload.IsPrivate, true
+	return payload, true
 }
 
 func parseAheadBehind(raw string) (int, int) {
@@ -58,7 +72,13 @@ func syncLabel(ahead, behind int) string {
 	}
 }
 
-func visibilityLabel(isPrivate bool) string {
+func visibilityLabel(isPrivate, archived bool) string {
+	if archived {
+		if isPrivate {
+			return labelArchPriv
+		}
+		return labelArchPub
+	}
 	if isPrivate {
 		return "🔒 Priv"
 	}
@@ -77,4 +97,26 @@ func devLabel(exists bool) string {
 		return "📦"
 	}
 	return "-"
+}
+
+func matchDirName(name string, proj, wh bool) bool {
+	if !proj && !wh {
+		return true
+	}
+	ok := false
+	if proj && strings.HasPrefix(name, prefixProj) {
+		ok = true
+	}
+	if wh && strings.HasPrefix(name, prefixWH) {
+		ok = true
+	}
+	return ok
+}
+
+func isGitWorkTreeOutput(out string, err error) bool {
+	if err != nil {
+		return false
+	}
+	s := strings.TrimSpace(out)
+	return s == "true" || s == ""
 }

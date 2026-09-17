@@ -34,6 +34,11 @@ func TestParseArgs(t *testing.T) {
 		t.Fatalf("help wins: %+v %v", args, err)
 	}
 
+	args, err = parseArgs([]string{"--all", "--proj", "--wh"})
+	if err != nil || !args.all || !args.proj || !args.wh {
+		t.Fatalf("filters: %+v %v", args, err)
+	}
+
 	if _, err := parseArgs([]string{"--unknown"}); err == nil {
 		t.Fatal("unknown flag should fail")
 	}

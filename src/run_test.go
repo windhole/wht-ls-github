@@ -24,6 +24,9 @@ func TestRunHelpAndVersion(t *testing.T) {
 	if !strings.Contains(stdout.String(), "使い方") {
 		t.Fatalf("help: %s", stdout.String())
 	}
+	if !strings.Contains(stdout.String(), "--all") || !strings.Contains(stdout.String(), "--proj") || !strings.Contains(stdout.String(), "--wh") {
+		t.Fatalf("help missing flags: %s", stdout.String())
+	}
 
 	stdout.Reset()
 	stderr.Reset()
@@ -105,6 +108,55 @@ func TestRunListsRepos(t *testing.T) {
 	}
 	if !strings.Contains(out, "Checking GitHub repositories") {
 		t.Fatalf("missing progress: %s", out)
+	}
+}
+
+func TestRunProjFilter(t *testing.T) {
+	var stdout, stderr strings.Builder
+	now := time.Date(2026, 9, 6, 0, 0, 0, 0, time.UTC)
+	h := &host{
+		lookPath: func(string) (string, error) { return "/bin/tool", nil },
+		readDir: func(path string) ([]os.DirEntry, error) {
+			return []os.DirEntry{
+				memDirEntry{name: "wht-ls-github", dir: true},
+				memDirEntry{name: "proj-notes", dir: true},
+			}, nil
+		},
+		stat: func(path string) (os.FileInfo, error) {
+			return memFileInfo{name: path, dir: true, modTime: now}, nil
+		},
+		capture: func(cwd, name string, args ...string) (string, error) {
+			if name == "gh" {
+				return `{"isPrivate":false}`, nil
+			}
+			if name == "git" && len(args) > 0 && args[0] == "rev-parse" {
+				return "true", nil
+			}
+			if name == "git" && len(args) > 0 && args[0] == "status" {
+				return "", nil
+			}
+			if name == "git" && len(args) > 0 && args[0] == "rev-list" {
+				return "0\t0", nil
+			}
+			return "", nil
+		},
+		stdout: &stdout,
+		stderr: &stderr,
+		args0:  "lsg",
+	}
+	oldArgs := os.Args
+	os.Args = []string{"lsg", "--dir", "/repos", "--proj"}
+	t.Cleanup(func() { os.Args = oldArgs })
+
+	if code := run(h); code != 0 {
+		t.Fatalf("code=%d stderr=%s", code, stderr.String())
+	}
+	out := stdout.String()
+	if !strings.Contains(out, "proj-notes") {
+		t.Fatalf("missing proj: %s", out)
+	}
+	if strings.Contains(out, "wht-ls-github") {
+		t.Fatalf("wh repo should be filtered out: %s", out)
 	}
 }
 

@@ -34,6 +34,9 @@ func TestWriteTableAndLegend(t *testing.T) {
 	if !strings.Contains(out, "📥 Pull needed") {
 		t.Fatalf("missing pull legend: %s", out)
 	}
+	if !strings.Contains(out, "🚫 no git") || !strings.Contains(out, "☁️ no GitHub") {
+		t.Fatalf("missing local-status legend: %s", out)
+	}
 
 	lines := strings.Split(strings.TrimSuffix(out, "\n"), "\n")
 	var tableLines []string

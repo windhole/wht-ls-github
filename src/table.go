@@ -29,6 +29,9 @@ func writeLegend(w io.Writer) {
 	_, _ = io.WriteString(w, "📤 Push needed : You have local commits not on remote.\n")
 	_, _ = io.WriteString(w, "⚠️ Mod         : You have uncommitted files (modified/untracked).\n")
 	_, _ = io.WriteString(w, "📦             : .devcontainer environment detected.\n")
+	_, _ = io.WriteString(w, "🚫 no git      : Directory is not a git repository.\n")
+	_, _ = io.WriteString(w, "☁️ no GitHub   : Git repo is not linked on GitHub.\n")
+	_, _ = io.WriteString(w, "🗄️ Priv / Pub  : Archived on GitHub (hidden unless --all).\n")
 }
 
 func writeBoxTable(w io.Writer, headers []string, rows [][]string) {

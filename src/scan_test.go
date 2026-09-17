@@ -86,13 +86,74 @@ func TestListRepoDirsSortsByMtimeAndSkipsHidden(t *testing.T) {
 	}
 }
 
-func TestInspectRepoSkipsWhenGhFails(t *testing.T) {
+func TestInspectRepoNoGitHubWhenGhFails(t *testing.T) {
 	t.Parallel()
 
 	h := &host{
 		capture: func(cwd, name string, args ...string) (string, error) {
 			if name == "gh" {
 				return "", fmt.Errorf("not a github repo")
+			}
+			if name == "git" && len(args) > 0 && args[0] == "rev-parse" {
+				return "true", nil
+			}
+			if name == "git" && len(args) > 0 && args[0] == "status" {
+				return "?? scratch.txt", nil
+			}
+			if name == "git" && len(args) > 0 && args[0] == "rev-list" {
+				return "0\t0", nil
+			}
+			return "", nil
+		},
+		stat: func(path string) (os.FileInfo, error) {
+			return nil, os.ErrNotExist
+		},
+	}
+	row := inspectRepo(h, "/repos/foo", "foo", inspectOpts{})
+	if row == nil {
+		t.Fatal("expected a row")
+	}
+	if row.Sync != labelNoGitHub || row.Visibility != labelNA || row.Clean != "⚠️ Mod" {
+		t.Fatalf("row: %+v", row)
+	}
+}
+
+func TestInspectRepoNoGit(t *testing.T) {
+	t.Parallel()
+
+	h := &host{
+		capture: func(cwd, name string, args ...string) (string, error) {
+			if name == "git" && len(args) > 0 && args[0] == "rev-parse" {
+				return "", fmt.Errorf("not a git repo")
+			}
+			return "", fmt.Errorf("unexpected %s %v", name, args)
+		},
+		stat: func(path string) (os.FileInfo, error) {
+			if strings.HasSuffix(path, ".devcontainer") {
+				return memFileInfo{name: ".devcontainer", dir: true}, nil
+			}
+			return nil, os.ErrNotExist
+		},
+	}
+	row := inspectRepo(h, "/repos/notes", "notes", inspectOpts{})
+	if row == nil {
+		t.Fatal("expected a row")
+	}
+	if row.Sync != labelNoGit || row.Visibility != labelNA || row.Clean != labelNA || row.Dev != "📦" {
+		t.Fatalf("row: %+v", row)
+	}
+}
+
+func TestInspectRepoHidesArchivedUnlessAll(t *testing.T) {
+	t.Parallel()
+
+	h := &host{
+		capture: func(cwd, name string, args ...string) (string, error) {
+			if name == "gh" {
+				return `{"isPrivate":true,"isArchived":true}`, nil
+			}
+			if name == "git" && len(args) > 0 && args[0] == "rev-parse" {
+				return "true", nil
 			}
 			if name == "git" && len(args) > 0 && args[0] == "status" {
 				return "", nil
@@ -106,8 +167,12 @@ func TestInspectRepoSkipsWhenGhFails(t *testing.T) {
 			return nil, os.ErrNotExist
 		},
 	}
-	if row := inspectRepo(h, "/repos/foo", "foo"); row != nil {
-		t.Fatalf("expected skip, got %+v", row)
+	if row := inspectRepo(h, "/repos/old", "old", inspectOpts{}); row != nil {
+		t.Fatalf("archived should hide: %+v", row)
+	}
+	row := inspectRepo(h, "/repos/old", "old", inspectOpts{showArchived: true})
+	if row == nil || row.Visibility != "🗄️ Priv" || row.Sync != "✅ Synced" {
+		t.Fatalf("archived with --all: %+v", row)
 	}
 }
 
@@ -122,6 +187,8 @@ func TestInspectRepoBuildsRowAfterFetch(t *testing.T) {
 			switch {
 			case name == "gh":
 				return `{"isPrivate":true}`, nil
+			case name == "git" && len(args) > 0 && args[0] == "rev-parse":
+				return "true", nil
 			case name == "git" && len(args) > 0 && args[0] == "fetch":
 				<-fetchReleased
 				return "", nil
@@ -146,7 +213,7 @@ func TestInspectRepoBuildsRowAfterFetch(t *testing.T) {
 
 	done := make(chan *repoRow, 1)
 	go func() {
-		done <- inspectRepo(h, "/repos/foo", "foo")
+		done <- inspectRepo(h, "/repos/foo", "foo", inspectOpts{})
 	}()
 
 	select {
@@ -180,9 +247,12 @@ func TestInspectAllPreservesOrderAndDropsSkipped(t *testing.T) {
 			base := filepath.Base(cwd)
 			if name == "gh" {
 				if base == "skip" {
-					return "", fmt.Errorf("missing")
+					return `{"isPrivate":false,"isArchived":true}`, nil
 				}
 				return `{"isPrivate":false}`, nil
+			}
+			if name == "git" && len(args) > 0 && args[0] == "rev-parse" {
+				return "true", nil
 			}
 			if name == "git" && len(args) > 0 && args[0] == "status" {
 				return "", nil
@@ -202,12 +272,38 @@ func TestInspectAllPreservesOrderAndDropsSkipped(t *testing.T) {
 		{name: "skip"},
 		{name: "third"},
 	}
-	rows := inspectAll(h, "/repos", dirs)
+	rows := inspectAll(h, "/repos", dirs, inspectOpts{})
 	if len(rows) != 2 {
 		t.Fatalf("len=%d %#v", len(rows), rows)
 	}
 	if rows[0].Repo != "first" || rows[1].Repo != "third" {
 		t.Fatalf("order: %#v", rows)
+	}
+}
+
+func TestFilterDirs(t *testing.T) {
+	t.Parallel()
+
+	dirs := []dirInfo{
+		{name: "wht-ls-github"},
+		{name: "proj-notes"},
+		{name: "carrot-timer"},
+	}
+	got := filterDirs(dirs, true, false)
+	if len(got) != 1 || got[0].name != "proj-notes" {
+		t.Fatalf("proj: %#v", got)
+	}
+	got = filterDirs(dirs, false, true)
+	if len(got) != 1 || got[0].name != "wht-ls-github" {
+		t.Fatalf("wh: %#v", got)
+	}
+	got = filterDirs(dirs, true, true)
+	if len(got) != 2 {
+		t.Fatalf("union: %#v", got)
+	}
+	got = filterDirs(dirs, false, false)
+	if len(got) != 3 {
+		t.Fatalf("none: %#v", got)
 	}
 }
 

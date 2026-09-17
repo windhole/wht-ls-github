@@ -15,6 +15,10 @@ type dirInfo struct {
 	mtime time.Time
 }
 
+type inspectOpts struct {
+	showArchived bool
+}
+
 func defaultScanDir(home string) string {
 	return filepath.Join(home, "Documents", "GitHub")
 }
@@ -42,7 +46,20 @@ func listRepoDirs(h *host, root string) ([]dirInfo, error) {
 	return out, nil
 }
 
-func inspectAll(h *host, root string, dirs []dirInfo) []repoRow {
+func filterDirs(dirs []dirInfo, proj, wh bool) []dirInfo {
+	if !proj && !wh {
+		return dirs
+	}
+	out := make([]dirInfo, 0, len(dirs))
+	for _, d := range dirs {
+		if matchDirName(d.name, proj, wh) {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+func inspectAll(h *host, root string, dirs []dirInfo, opts inspectOpts) []repoRow {
 	rows := make([]*repoRow, len(dirs))
 	sem := make(chan struct{}, maxWorkers)
 	var wg sync.WaitGroup
@@ -52,7 +69,7 @@ func inspectAll(h *host, root string, dirs []dirInfo) []repoRow {
 		go func(i int, d dirInfo) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			rows[i] = inspectRepo(h, filepath.Join(root, d.name), d.name)
+			rows[i] = inspectRepo(h, filepath.Join(root, d.name), d.name, opts)
 		}(i, d)
 	}
 	wg.Wait()
@@ -66,22 +83,37 @@ func inspectAll(h *host, root string, dirs []dirInfo) []repoRow {
 	return out
 }
 
-func inspectRepo(h *host, fullPath, dirName string) *repoRow {
+func inspectRepo(h *host, fullPath, dirName string, opts inspectOpts) *repoRow {
+	revOut, revErr := h.capture(fullPath, "git", "rev-parse", "--is-inside-work-tree")
+	devExists := false
+	if _, err := h.stat(filepath.Join(fullPath, ".devcontainer")); err == nil {
+		devExists = true
+	}
+
+	if !isGitWorkTreeOutput(revOut, revErr) {
+		return &repoRow{
+			Repo:       dirName,
+			Visibility: labelNA,
+			Sync:       labelNoGit,
+			Clean:      labelNA,
+			Dev:        devLabel(devExists),
+		}
+	}
+
 	var (
 		ghRaw      string
 		ghErr      error
 		statusText string
 		statusErr  error
-		devExists  bool
 		fetchDone  = make(chan struct{})
 	)
 
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
-		ghRaw, ghErr = h.capture(fullPath, "gh", "repo", "view", "--json", "isPrivate")
+		ghRaw, ghErr = h.capture(fullPath, "gh", "repo", "view", "--json", "isPrivate,isArchived")
 	}()
 	go func() {
 		defer wg.Done()
@@ -92,36 +124,61 @@ func inspectRepo(h *host, fullPath, dirName string) *repoRow {
 		defer wg.Done()
 		statusText, statusErr = h.capture(fullPath, "git", "status", "-s")
 	}()
-	go func() {
-		defer wg.Done()
-		_, err := h.stat(filepath.Join(fullPath, ".devcontainer"))
-		devExists = err == nil
-	}()
 
 	<-fetchDone
-	syncRaw, err := h.capture(fullPath, "git", "rev-list", "--left-right", "--count", "HEAD...@{u}")
-	if err != nil {
-		syncRaw = "0\t0"
-	}
 	wg.Wait()
 
 	if ghErr != nil || ghRaw == "" {
+		clean := labelNA
+		if statusErr == nil {
+			clean = cleanLabel(statusText)
+		}
+		return &repoRow{
+			Repo:       dirName,
+			Visibility: labelNA,
+			Sync:       labelNoGitHub,
+			Clean:      clean,
+			Dev:        devLabel(devExists),
+		}
+	}
+	meta, ok := parseGhMeta(ghRaw)
+	if !ok {
+		return &repoRow{
+			Repo:       dirName,
+			Visibility: labelNA,
+			Sync:       labelNoGitHub,
+			Clean:      cleanLabel(statusText),
+			Dev:        devLabel(devExists),
+		}
+	}
+	if meta.IsArchived && !opts.showArchived {
 		return nil
 	}
-	isPrivate, ok := parseGhPrivate(ghRaw)
-	if !ok {
-		return nil
+
+	syncRaw := "0\t0"
+	if statusErr == nil {
+		if raw, err := h.capture(fullPath, "git", "rev-list", "--left-right", "--count", "HEAD...@{u}"); err == nil {
+			syncRaw = raw
+		}
 	}
 	if statusErr != nil {
-		return nil
+		return &repoRow{
+			Repo:       dirName,
+			Visibility: visibilityLabel(meta.IsPrivate, meta.IsArchived),
+			Sync:       syncLabel(parseAheadBehind(syncRaw)),
+			Clean:      labelNA,
+			Dev:        devLabel(devExists),
+			archived:   meta.IsArchived,
+		}
 	}
 
 	ahead, behind := parseAheadBehind(syncRaw)
 	return &repoRow{
 		Repo:       dirName,
-		Visibility: visibilityLabel(isPrivate),
+		Visibility: visibilityLabel(meta.IsPrivate, meta.IsArchived),
 		Sync:       syncLabel(ahead, behind),
 		Clean:      cleanLabel(statusText),
 		Dev:        devLabel(devExists),
+		archived:   meta.IsArchived,
 	}
 }

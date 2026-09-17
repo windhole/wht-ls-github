@@ -2,12 +2,15 @@
 
 ローカルディレクトリにある GitHub リポジトリ群の状態を、一括で確認・表示するコマンドです。
 
-既定では `~/Documents/GitHub` 直下を、ディレクトリの mtime が新しい順に見ます。各リポジトリで `git fetch` したうえで、公開範囲・リモートとの差・未コミット変更・`.devcontainer` の有無を表に出します。
+既定では `~/Documents/GitHub` 直下を、ディレクトリの mtime が新しい順に見ます。git リポジトリで GitHub と連携しているものは `git fetch` したうえで、公開範囲・リモートとの差・未コミット変更・`.devcontainer` の有無を表に出します。git 未初期化や GitHub 未連携も、その旨が分かる行として出します。GitHub で archive されたものは既定では出しません。
 
 | フラグ | 動き |
 |--------|------|
-| （なし） | 既定の `~/Documents/GitHub` を走査する |
+| （なし） | 既定の `~/Documents/GitHub` を走査する（archive は除く） |
 | `--dir PATH` | 指定したディレクトリ直下を走査する |
+| `--all` | archive されたリポジトリも表示する |
+| `--proj` | 名前が `proj-` で始まるディレクトリだけ表示する |
+| `--wh` | 名前が `wh` で始まるディレクトリだけ表示する |
 | `--version` | バージョンだけ表示する |
 | `--help` / `-h` | 使い方を表示する |
 
@@ -42,18 +45,27 @@ lsg
 # 走査先を指定する
 lsg --dir /path/to/repos
 
+# archive も含める
+lsg --all
+
+# 名前が proj- で始まるものだけ
+lsg --proj
+
+# 名前が wh で始まるものだけ
+lsg --wh
+
 # バージョンだけ
 lsg --version
 ```
 
-各リポジトリで `git fetch` します。リモートの更新を見るための副作用です。`gh repo view` が失敗したディレクトリは行から除外します。
+GitHub と連携しているリポジトリでは `git fetch` します。`git init` していないディレクトリは `🚫 no git`、git はあるが `gh repo view` が失敗するものは `☁️ no GitHub` と出します。`--proj` と `--wh` を両方付けると、どちらかに合うものを出します。
 
 ## 表示すること
 
 - **Repo**: ディレクトリ名
-- **Visibility**: GitHub 上の Public / Private（`gh repo view --json isPrivate`）
-- **Sync**: 追跡ブランチとの差（Synced / Pull needed / Push needed / Diverged）
-- **Clean**: 未コミットの変更（modified / untracked）があるか
+- **Visibility**: GitHub 上の Public / Private。archive は `🗄️ Priv` / `🗄️ Pub`。未連携は `-`
+- **Sync**: 追跡ブランチとの差（Synced / Pull needed / Push needed / Diverged）。未初期化は `🚫 no git`、未連携は `☁️ no GitHub`
+- **Clean**: 未コミットの変更（modified / untracked）があるか。git でないときは `-`
 - **Dev**: `.devcontainer` があるか
 
 隠しディレクトリ（`.` で始まるもの）は走査しません。
