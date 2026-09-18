@@ -1,7 +1,7 @@
 # 0012. 未初期化・未連携を表示し、archive / 名前で絞る
 
 Date: 2026-09-17
-Status: Accepted
+Status: Accepted ( --wh の対象は ADR-0013 で明示 )
 
 ## Context
 

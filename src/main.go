@@ -69,7 +69,7 @@ func printUsage(w io.Writer, cmd string) {
 	fmt.Fprintf(w, "  %s --proj\n", cmd)
 	fmt.Fprintln(w, "    名前が proj- で始まるディレクトリだけ表示する")
 	fmt.Fprintf(w, "  %s --wh\n", cmd)
-	fmt.Fprintln(w, "    名前が wh で始まるディレクトリだけ表示する")
+	fmt.Fprintln(w, "    名前が wh または windhole- で始まるディレクトリだけ表示する")
 	fmt.Fprintf(w, "  %s --version\n", cmd)
 	fmt.Fprintln(w, "    バージョンを表示する")
 	fmt.Fprintln(w)

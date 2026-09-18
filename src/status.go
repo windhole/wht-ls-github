@@ -27,8 +27,9 @@ const (
 	labelArchPriv = "🗄️ Priv"
 	labelArchPub  = "🗄️ Pub"
 	prefixProj    = "proj-"
-	prefixWH      = "wh"
 )
+
+var prefixWH = []string{"wh", "windhole-"}
 
 func parseGhMeta(raw string) (ghMeta, bool) {
 	raw = strings.TrimSpace(raw)
@@ -107,10 +108,19 @@ func matchDirName(name string, proj, wh bool) bool {
 	if proj && strings.HasPrefix(name, prefixProj) {
 		ok = true
 	}
-	if wh && strings.HasPrefix(name, prefixWH) {
+	if wh && hasAnyPrefix(name, prefixWH...) {
 		ok = true
 	}
 	return ok
+}
+
+func hasAnyPrefix(name string, prefixes ...string) bool {
+	for _, p := range prefixes {
+		if strings.HasPrefix(name, p) {
+			return true
+		}
+	}
+	return false
 }
 
 func isGitWorkTreeOutput(out string, err error) bool {

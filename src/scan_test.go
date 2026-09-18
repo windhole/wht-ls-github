@@ -286,6 +286,7 @@ func TestFilterDirs(t *testing.T) {
 
 	dirs := []dirInfo{
 		{name: "wht-ls-github"},
+		{name: "windhole-note"},
 		{name: "proj-notes"},
 		{name: "carrot-timer"},
 	}
@@ -294,15 +295,15 @@ func TestFilterDirs(t *testing.T) {
 		t.Fatalf("proj: %#v", got)
 	}
 	got = filterDirs(dirs, false, true)
-	if len(got) != 1 || got[0].name != "wht-ls-github" {
+	if len(got) != 2 {
 		t.Fatalf("wh: %#v", got)
 	}
 	got = filterDirs(dirs, true, true)
-	if len(got) != 2 {
+	if len(got) != 3 {
 		t.Fatalf("union: %#v", got)
 	}
 	got = filterDirs(dirs, false, false)
-	if len(got) != 3 {
+	if len(got) != 4 {
 		t.Fatalf("none: %#v", got)
 	}
 }

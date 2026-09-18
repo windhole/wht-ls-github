@@ -103,6 +103,9 @@ func TestMatchDirName(t *testing.T) {
 	if !matchDirName("wht-ls", false, true) || !matchDirName("whc-ai", false, true) {
 		t.Fatal("--wh should match wh*")
 	}
+	if !matchDirName("windhole-note", false, true) {
+		t.Fatal("--wh should match windhole-")
+	}
 	if matchDirName("proj-foo", false, true) {
 		t.Fatal("proj- should not match --wh")
 	}
